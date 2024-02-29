@@ -51,87 +51,88 @@ class NotificationPage extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         } else {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          return Stack(
             children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _notificationController.notifications.length + (_notificationController.hasMoreData.value ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index < _notificationController.notifications.length) {
-                      final notification = _notificationController.notifications[index];
-                      return CustomCart(
-                        index: notification.id!,
-                        itemName: notification.title,
-                        description: notification.description,
-                        date: notification.updatedAt ?? DateTime.now(),
-                        readStatus: notification.readStatus,
-                        isChecked: _notificationController.isEditMode.value &&
-                            _notificationController.selectedIndexes.contains(notification.id!),
-                        onCheckboxChanged: (isChecked) {
-                          _notificationController.toggleCheckbox(notification.id!, isChecked);
-                        },
-                        isEditMode: _notificationController.isEditMode.value,
-                      );
-                    } else {
-                      // Show a loading indicator if there's more data to load
-                      return _notificationController.hasMoreData.value ? SizedBox(
-                        width: 10,
-                        height: 50,
-                        child: Center(child: CircularProgressIndicator()),
-                      ) : SizedBox();
-                    }
-                  },
-                ),
+              ListView.builder(
+                controller: _scrollController,
+                itemCount: _notificationController.notifications.length + (_notificationController.hasMoreData.value ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index < _notificationController.notifications.length) {
+                    final notification = _notificationController.notifications[index];
+                    return CustomCart(
+                      index: notification.id!,
+                      itemName: notification.title,
+                      description: notification.description,
+                      date: notification.updatedAt ?? DateTime.now(),
+                      readStatus: notification.readStatus,
+                      isChecked: _notificationController.isEditMode.value &&
+                          _notificationController.selectedIndexes.contains(notification.id!),
+                      onCheckboxChanged: (isChecked) {
+                        _notificationController.toggleCheckbox(notification.id!, isChecked);
+                      },
+                      isEditMode: _notificationController.isEditMode.value,
+                    );
+                  } else {
+                    // Show a loading indicator if there's more data to load
+                    return _notificationController.hasMoreData.value ? SizedBox(
+                      width: 10,
+                      height: 50,
+                      child: Center(child: CircularProgressIndicator()),
+                    ) : SizedBox();
+                  }
+                },
               ),
-              // Bottom container with animation
-              AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                height: _notificationController.isEditMode.value ? 80 : 0,
-                color: Colors.white,
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _notificationController.selectedIndexes.length ==
-                                _notificationController.notifications.length,
-                            onChanged: (isChecked) {
-                              _notificationController.toggleAllCheckboxes(isChecked);
-                            },
-                          ),
-                          Text("All"),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          ElevatedButton(
-                            onPressed: _notificationController.selectedIndexes.isNotEmpty
-                                ? () {
-                              _notificationController.fetchDeleteNotificationStatus(
-                                  _notificationController.selectedIndexes.toList());
-                            }
-                                : null,
-                            child: Text("Delete"),
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          ElevatedButton(
-                            onPressed: _notificationController.selectedIndexes.isNotEmpty
-                                ? () {
-                              _notificationController.fetchUpdateNotificationStatus(
-                                  _notificationController.selectedIndexes.toList());
-                            }
-                                : null,
-                            child: Text("Mark as read"),
-                          ),
-                        ],
-                      ),
-                    ],
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: _notificationController.isEditMode.value ? 0 : -80,
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  height: 80,
+                  color: Colors.white,
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _notificationController.selectedIndexes.length ==
+                                  _notificationController.notifications.length,
+                              onChanged: (isChecked) {
+                                _notificationController.toggleAllCheckboxes(isChecked);
+                              },
+                            ),
+                            Text("All"),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: _notificationController.selectedIndexes.isNotEmpty
+                                  ? () {
+                                _notificationController.fetchDeleteNotificationStatus(
+                                    _notificationController.selectedIndexes.toList());
+                              }
+                                  : null,
+                              child: Text("Delete"),
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            ElevatedButton(
+                              onPressed: _notificationController.selectedIndexes.isNotEmpty
+                                  ? () {
+                                _notificationController.fetchUpdateNotificationStatus(
+                                    _notificationController.selectedIndexes.toList());
+                              }
+                                  : null,
+                              child: Text("Mark as read"),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
