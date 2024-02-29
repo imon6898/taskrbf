@@ -6,9 +6,9 @@ import '../models/get_notification_model.dart';
 class ApiService {
   static Dio _dio = Dio();
   static String baseUrl = 'http://sherpur.rbfgroupbd.com';
-  static String authToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzA5MDUzOTk1LCJleHAiOjE3MDkxNDAzOTV9.nKtEHUmUkw0BnHyc7vmgJ2Wm1TogsUWQS4kWEkz-Iv0';
+  static String authToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzA5MTgwNDg3LCJleHAiOjE3MDkyNjY4ODd9.obz-4DW4FLFz8wP2OHRoCvTn_8Z6YGN-REJlor8I-24';
 
-  static Future<List<Result>> fetchNotifications({int page = 1, int pageSize = 5}) async {
+  static Future<List<Result>> fetchNotifications({int page = 1, int pageSize = 15}) async {
     var headers = {
       'Authorization': authToken,
     };

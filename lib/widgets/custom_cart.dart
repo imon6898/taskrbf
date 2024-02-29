@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart'; // Import Get package
+import '../controllers/notification_controller.dart'; // Import your GetX controller
+
 
 class CustomCart extends StatelessWidget {
-  final int? index; // Define the index parameter
+  final int? index;
   final String? itemName;
   final DateTime? date;
   final String? description;
   final String? readStatus;
-  final bool isChecked; // Track whether the checkbox is checked
-  final bool isEditMode; // Track whether edit mode is active
-  final ValueChanged<bool?>? onCheckboxChanged; // Callback for checkbox change
+  final bool isChecked;
+  final bool isEditMode;
+  final Function(bool?)? onCheckboxChanged;
 
   CustomCart({
-    this.index, // Make index required
+    this.index,
     this.itemName,
     this.date,
     this.description,
     this.readStatus,
-    this.isChecked = false, // Initialize isChecked to false
-    required this.isEditMode, // Receive edit mode state
+    this.isChecked = false,
+    required this.isEditMode,
     this.onCheckboxChanged,
   });
 
@@ -38,24 +41,22 @@ class CustomCart extends StatelessWidget {
         ),
       );
     } else {
-      indicator = SizedBox(width: 0); // Hide the indicator by setting width to 0
+      indicator = SizedBox(width: 0);
     }
 
     return Padding(
       padding: const EdgeInsets.only(top: 2.0),
       child: ListTile(
         tileColor: Colors.white,
-        leading: isEditMode ? Checkbox( // Show checkbox only in edit mode
+        onTap: () {
+          if (isEditMode) {
+            onCheckboxChanged?.call(!isChecked); // Invert the isChecked value
+          }
+        },
+        leading: isEditMode ? Checkbox(
           value: isChecked,
-          onChanged: (isChecked) {
-            // Call the onChanged callback
-            onCheckboxChanged?.call(isChecked);
-            // Print the ID if the checkbox is checked
-            if (isChecked == true) {
-              print('ID: ${index}');
-            }
-          },
-        ) : null, // Hide checkbox when not in edit mode
+          onChanged: onCheckboxChanged,
+        ) : null,
         title: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +66,7 @@ class CustomCart extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    indicator, // Show the indicator if not null
+                    indicator,
                     Text(
                       itemName ?? '',
                       style: TextStyle(fontSize: 14.0, color: Colors.red),

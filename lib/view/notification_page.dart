@@ -1,73 +1,38 @@
 import 'package:flutter/material.dart';
-import '../controllers/api_services.dart';
+import 'package:get/get.dart';
+import '../controllers/notification_controller.dart';
 import '../models/get_notification_model.dart';
 import '../widgets/custom_cart.dart';
 
-class NotificationPage extends StatefulWidget {
-  const NotificationPage({Key? key}) : super(key: key);
-
-  @override
-  State<NotificationPage> createState() => _NotificationPageState();
-}
-
-class _NotificationPageState extends State<NotificationPage> {
-  List<Result> notifications = [];
-  bool isEditMode = false;
-  Set<int> selectedIndexes = {};
-
-  @override
-  void initState() {
-    super.initState();
-    fetchNotifications();
-  }
-
-  Future<void> fetchNotifications() async {
-    var result = await ApiService.fetchNotifications(page: 1, pageSize: 5);
-    setState(() {
-      notifications = result;
-    });
-  }
-
-  Future<void> fetchUpdateNotificationStatus(List<int> notificationIndexes) async {
-    print('Updating notification status for IDs: $notificationIndexes');
-    await ApiService.updateNotificationStatus(notificationIndexes, "Read");
-  }
-
-  Future<void> fetchDeleteNotificationStatus(List<int> notificationIndexes) async {
-    print('Deleting notifications with IDs: $notificationIndexes');
-    await ApiService.updateNotificationStatus(notificationIndexes, "Delete");
-    // Remove deleted notifications from the list
-    setState(() {
-      notifications.removeWhere((notification) => notificationIndexes.contains(notification.id!));
-    });
-  }
+class NotificationPage extends StatelessWidget {
+  final NotificationController _notificationController = Get.put(NotificationController());
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        // Reached the bottom of the list
+        _notificationController.fetchMoreNotifications();
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.white60,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.pop(context);
+            Get.back();
           },
           icon: Icon(Icons.arrow_back_ios_new),
         ),
         title: Text("Notification"),
         actions: [
-          IconButton(
+          Obx(() => IconButton(
             onPressed: () {
-              setState(() {
-                // Toggle edit mode
-                isEditMode = !isEditMode;
-
-                // Clear selected indexes when exiting edit mode
-                if (!isEditMode) {
-                  selectedIndexes.clear();
-                }
-              });
+              _notificationController.toggleEditMode();
             },
-            icon: isEditMode
+            icon: _notificationController.isEditMode.value
                 ? Text(
               'Cancel',
               style: TextStyle(
@@ -77,102 +42,103 @@ class _NotificationPageState extends State<NotificationPage> {
               ),
             )
                 : Icon(Icons.edit_outlined),
-          ),
+          )),
         ],
       ),
-      body: Container(
-        height: double.infinity,
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                children: notifications.map((notification) {
-                  return CustomCart(
-                    index: notification.id!,
-                    itemName: notification.title,
-                    description: notification.description,
-                    date: notification.updatedAt ?? DateTime.now(),
-                    readStatus: notification.readStatus,
-                    isChecked: isEditMode && selectedIndexes.contains(notification.id!),
-                    onCheckboxChanged: (isChecked) {
-                      setState(() {
-                        if (isChecked ?? false) {
-                          selectedIndexes.add(notification.id!);
-                        } else {
-                          selectedIndexes.remove(notification.id!);
-                        }
-                      });
-                    },
-                    isEditMode: isEditMode,
-                  );
-                }).toList(),
+      body: Obx(() {
+        if (_notificationController.isLoading.value && _notificationController.currentPage == 10) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _notificationController.notifications.length + (_notificationController.hasMoreData.value ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index < _notificationController.notifications.length) {
+                      final notification = _notificationController.notifications[index];
+                      return CustomCart(
+                        index: notification.id!,
+                        itemName: notification.title,
+                        description: notification.description,
+                        date: notification.updatedAt ?? DateTime.now(),
+                        readStatus: notification.readStatus,
+                        isChecked: _notificationController.isEditMode.value &&
+                            _notificationController.selectedIndexes.contains(notification.id!),
+                        onCheckboxChanged: (isChecked) {
+                          _notificationController.toggleCheckbox(notification.id!, isChecked);
+                        },
+                        isEditMode: _notificationController.isEditMode.value,
+                      );
+                    } else {
+                      // Show a loading indicator if there's more data to load
+                      return _notificationController.hasMoreData.value ? SizedBox(
+                        width: 10,
+                        height: 50,
+                        child: Center(child: CircularProgressIndicator()),
+                      ) : SizedBox();
+                    }
+                  },
+                ),
               ),
-            ),
-            // Render the bottom container if edit mode is active
-            if (isEditMode)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  height: 80,
-                  color: Colors.white,
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            if (isEditMode)
-                              Checkbox(
-                                value: selectedIndexes.length == notifications.length,
-                                onChanged: (isChecked) {
-                                  setState(() {
-                                    if (isChecked != null) {
-                                      if (isChecked) {
-                                        selectedIndexes =
-                                            Set.from(notifications.map((notification) => notification.id!));
-                                      } else {
-                                        selectedIndexes.clear();
-                                      }
-                                    }
-                                  });
-                                },
-                              ),
-                            Text("All"),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: selectedIndexes.isNotEmpty
-                                  ? () {
-                                fetchDeleteNotificationStatus(selectedIndexes.toList());
-                              }
-                                  : null,
-                              child: Text("Delete"),
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            ElevatedButton(
-                              onPressed: selectedIndexes.isNotEmpty
-                                  ? () {
-                                fetchUpdateNotificationStatus(selectedIndexes.toList());
-                              }
-                                  : null,
-                              child: Text("Mark as read"),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+              // Bottom container with animation
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                height: _notificationController.isEditMode.value ? 80 : 0,
+                color: Colors.white,
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _notificationController.selectedIndexes.length ==
+                                _notificationController.notifications.length,
+                            onChanged: (isChecked) {
+                              _notificationController.toggleAllCheckboxes(isChecked);
+                            },
+                          ),
+                          Text("All"),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: _notificationController.selectedIndexes.isNotEmpty
+                                ? () {
+                              _notificationController.fetchDeleteNotificationStatus(
+                                  _notificationController.selectedIndexes.toList());
+                            }
+                                : null,
+                            child: Text("Delete"),
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          ElevatedButton(
+                            onPressed: _notificationController.selectedIndexes.isNotEmpty
+                                ? () {
+                              _notificationController.fetchUpdateNotificationStatus(
+                                  _notificationController.selectedIndexes.toList());
+                            }
+                                : null,
+                            child: Text("Mark as read"),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
+            ],
+          );
+        }
+      }),
     );
   }
 }

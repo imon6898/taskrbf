@@ -1,9 +1,9 @@
-
+import 'package:badges/badges.dart' as custom_badges;
+import 'package:badges/badges.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/notification_controller.dart';
 import 'notification_page.dart';
-import 'package:badges/badges.dart' as custom_badges;
+import '../controllers/notification_controller.dart';
 
 class HomePage extends StatelessWidget {
   final NotificationController notificationController = Get.put(NotificationController());
@@ -65,7 +65,7 @@ class HomePage extends StatelessWidget {
               notificationController.notificationCount.toString(),
               style: TextStyle(color: Colors.white, fontSize: 10),
             ),
-            position: custom_badges.BadgePosition.topEnd(top: 2, end: 2),
+            position: BadgePosition.topEnd(top: 2, end: 2),
             child: IconButton(
               onPressed: () {
                 Get.to(NotificationPage());

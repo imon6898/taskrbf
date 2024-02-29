@@ -5,8 +5,12 @@ import '../controllers/api_services.dart';
 class NotificationController extends GetxController {
   var notifications = <Result>[].obs;
   var isEditMode = false.obs;
-  var selectedIndexes = <int>{}.obs;
   var notificationCount = 0.obs;
+  var selectedIndexes = Set<int>().obs;
+  int currentPage = 0;
+  int pageSize = 15;
+  var isLoading = false.obs; // Add this line
+  var hasMoreData = true.obs; // Add this line
 
   @override
   void onInit() {
@@ -15,9 +19,35 @@ class NotificationController extends GetxController {
   }
 
   void fetchNotifications() async {
-    var result = await ApiService.fetchNotifications(page: 1, pageSize: 5);
-    notifications.assignAll(result);
-    countUnreadNotifications();
+    isLoading.value = true;
+    var result = await ApiService.fetchNotifications(page: currentPage, pageSize: pageSize);
+    isLoading.value = false;
+
+    if (result.isNotEmpty) {
+      notifications.assignAll(result);
+      currentPage++;
+      countUnreadNotifications();
+    } else {
+      // No more data available
+      hasMoreData.value = false;
+    }
+  }
+
+  void fetchMoreNotifications() async {
+    if (!isLoading.value && hasMoreData.value) {
+      isLoading.value = true;
+      var result = await ApiService.fetchNotifications(page: currentPage, pageSize: pageSize);
+      isLoading.value = false;
+
+      if (result.isNotEmpty) {
+        notifications.addAll(result);
+        currentPage++;
+        countUnreadNotifications();
+      } else {
+        // No more data available
+        hasMoreData.value = false;
+      }
+    }
   }
 
   void countUnreadNotifications() {
@@ -27,15 +57,14 @@ class NotificationController extends GetxController {
 
   void toggleCheckbox(int index, bool? isChecked) {
     if (isChecked == true) {
-      if (index >= 0 && index < notifications.length) {
-        selectedIndexes.add(notifications[index].id!);
-      }
+      selectedIndexes.add(index); // Add the index when isChecked is true
     } else {
-      if (index >= 0 && index < notifications.length) {
-        selectedIndexes.remove(notifications[index].id!);
-      }
+      selectedIndexes.remove(index); // Remove the index when isChecked is false
     }
   }
+
+
+
 
   void toggleAllCheckboxes(bool? isChecked) {
     if (isChecked != null) {
@@ -54,14 +83,19 @@ class NotificationController extends GetxController {
     }
   }
 
-  Future<void> updateNotificationStatus(String status) async {
-    if (selectedIndexes.isNotEmpty) {
-      await ApiService.updateNotificationStatus(selectedIndexes.toList(), status);
-      if (status == "Delete") {
-        // Remove deleted notifications from the list
-        notifications.removeWhere((notification) => selectedIndexes.contains(notification.id!));
-        countUnreadNotifications(); // Recalculate notification count
-      }
-    }
+  void fetchUpdateNotificationStatus(List<int> notificationIndexes) async {
+    print('Updating notification status for IDs: $notificationIndexes');
+    await ApiService.updateNotificationStatus(notificationIndexes, "Read");
+    fetchNotifications();
+    countUnreadNotifications();
+  }
+
+  void fetchDeleteNotificationStatus(List<int> notificationIndexes) async {
+    print('Deleting notifications with IDs: $notificationIndexes');
+    await ApiService.updateNotificationStatus(notificationIndexes, "Delete");
+    // Remove deleted notifications from the list
+    selectedIndexes.clear();
+    fetchNotifications();
+    countUnreadNotifications();
   }
 }

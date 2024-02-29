@@ -39,6 +39,7 @@ dependencies:
   dio:
   badges:
   get:
+  infinite_scroll_pagination:
 
 dev_dependencies:
   flutter_test:
