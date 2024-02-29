@@ -8,7 +8,7 @@ class ApiService {
   static String baseUrl = 'http://sherpur.rbfgroupbd.com';
   static String authToken = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzA5MTgwNDg3LCJleHAiOjE3MDkyNjY4ODd9.obz-4DW4FLFz8wP2OHRoCvTn_8Z6YGN-REJlor8I-24';
 
-  static Future<List<Result>> fetchNotifications({int page = 1, int pageSize = 15}) async {
+  static Future<List<Result>> fetchNotifications({required int page, required int pageSize}) async {
     var headers = {
       'Authorization': authToken,
     };

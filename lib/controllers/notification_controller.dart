@@ -64,9 +64,6 @@ class NotificationController extends GetxController {
     }
   }
 
-
-
-
   void toggleAllCheckboxes(bool? isChecked) {
     if (isChecked != null) {
       if (isChecked) {
@@ -117,7 +114,6 @@ class NotificationController extends GetxController {
       );
     });
   }
-
 
 
   void fetchDeleteNotificationStatus(List<int> notificationIndexes) {
