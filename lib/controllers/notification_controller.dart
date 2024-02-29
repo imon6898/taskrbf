@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/get_notification_model.dart';
 import '../controllers/api_services.dart';
@@ -83,19 +84,66 @@ class NotificationController extends GetxController {
     }
   }
 
-  void fetchUpdateNotificationStatus(List<int> notificationIndexes) async {
+  void fetchUpdateNotificationStatus(List<int> notificationIndexes) {
     print('Updating notification status for IDs: $notificationIndexes');
-    await ApiService.updateNotificationStatus(notificationIndexes, "Read");
-    fetchNotifications();
-    countUnreadNotifications();
+    ApiService.updateNotificationStatus(notificationIndexes, "Read").then((_) {
+      // This block executes after the updateNotificationStatus completes
+      // Fetch notifications after updating the status
+      fetchNotifications();
+      countUnreadNotifications();
+      // Show green Snackbar if successful
+      Get.snackbar(
+        'Success',
+        'Notification status updated',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      // Remove the red indicator from the UI for successful updates
+      notificationIndexes.forEach((index) {
+        notifications.forEach((notification) {
+          if (notification.id == index) {
+            notification.readStatus = 'Yes';
+          }
+        });
+      });
+    }).catchError((error) {
+      print('Error updating notification status: $error');
+      // Show red Snackbar if unsuccessful
+      Get.snackbar(
+        'Error',
+        'Failed to update notification status',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    });
   }
 
-  void fetchDeleteNotificationStatus(List<int> notificationIndexes) async {
+
+
+  void fetchDeleteNotificationStatus(List<int> notificationIndexes) {
     print('Deleting notifications with IDs: $notificationIndexes');
-    await ApiService.updateNotificationStatus(notificationIndexes, "Delete");
-    // Remove deleted notifications from the list
-    selectedIndexes.clear();
-    fetchNotifications();
-    countUnreadNotifications();
+    ApiService.updateNotificationStatus(notificationIndexes, "Delete").then((_) {
+      // Remove deleted notifications from the list
+      selectedIndexes.clear();
+      fetchNotifications();
+      countUnreadNotifications();
+      // Show green Snackbar if successful
+      Get.snackbar(
+        'Success',
+        'Notifications deleted successfully',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    }).catchError((error) {
+      print('Error deleting notifications: $error');
+      // Show red Snackbar if unsuccessful
+      Get.snackbar(
+        'Error',
+        'Failed to delete notifications',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    });
   }
+
 }

@@ -59,7 +59,7 @@ class Result {
   final dynamic image;
   final String? title;
   final String? description;
-  final String? readStatus;
+  String? readStatus;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final dynamic deletedAt;
