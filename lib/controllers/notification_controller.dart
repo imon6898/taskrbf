@@ -74,6 +74,7 @@ class NotificationController extends GetxController {
     }
   }
 
+
   void toggleEditMode() {
     isEditMode.toggle();
     if (!isEditMode.value) {
@@ -83,26 +84,42 @@ class NotificationController extends GetxController {
 
   void fetchUpdateNotificationStatus(List<int> notificationIndexes) {
     print('Updating notification status for IDs: $notificationIndexes');
+    List<int> updatedIds = [];
+
     ApiService.updateNotificationStatus(notificationIndexes, "Read").then((_) {
       // This block executes after the updateNotificationStatus completes
       // Fetch notifications after updating the status
       fetchNotifications();
       countUnreadNotifications();
-      // Show green Snackbar if successful
-      Get.snackbar(
-        'Success',
-        'Notification status updated',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-      // Remove the red indicator from the UI for successful updates
+
+      // Show Snackbar indicating the status update for each notification index
       notificationIndexes.forEach((index) {
-        notifications.forEach((notification) {
-          if (notification.id == index) {
+        Result? notification = notifications.firstWhere((element) => element.id == index,);
+        if (notification != null) {
+          if (notification.readStatus == 'No') {
             notification.readStatus = 'Yes';
+            updatedIds.add(index);
+          } else {
+            // Notification already seen, show red Snackbar
+            Get.snackbar(
+              'Warning',
+              'You have already seen this notification',
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
           }
-        });
+        }
       });
+
+      // Show green Snackbar if successful updates occurred
+      if (updatedIds.isNotEmpty) {
+        Get.snackbar(
+          'Success',
+          'Notification status updated',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
     }).catchError((error) {
       print('Error updating notification status: $error');
       // Show red Snackbar if unsuccessful
@@ -114,6 +131,7 @@ class NotificationController extends GetxController {
       );
     });
   }
+
 
 
   void fetchDeleteNotificationStatus(List<int> notificationIndexes) {

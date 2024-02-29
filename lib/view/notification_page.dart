@@ -97,8 +97,7 @@ class NotificationPage extends StatelessWidget {
                         Row(
                           children: [
                             Checkbox(
-                              value: _notificationController.selectedIndexes.length ==
-                                  _notificationController.notifications.length,
+                              value: _notificationController.selectedIndexes.length == _notificationController.notifications.length,
                               onChanged: (isChecked) {
                                 _notificationController.toggleAllCheckboxes(isChecked);
                               },
